@@ -1,6 +1,6 @@
 # C# Vector<T\>
 
- A few (NET CORE 2.1) examples for the _System.Numerics.Vectors_ **Vector<T\>** and  **Vector** classes.
+ A few (NET CORE 2.1) benchmarks for the _System.Numerics.Vectors_ **Vector<T\>** and  **Vector** classes.
 
  //TODO add names of projects
 
@@ -8,19 +8,23 @@
 
 If you develop for NET Core nothing extra is needed (the project included here is written against Net Core 2.1).
 
-In case you want to develop for the .NET framework you´ll need the NuGet package **[System.Numerics.Vectors](https://www.nuget.org/packages/System.Numerics.Vectors/)**.
+To run the benchmarks you need to add [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet) (either by building the source or by adding a [NuGet package](https://www.nuget.org/packages/BenchmarkDotNet/) to your project).
+
+In case you want to run on the .NET framework you´ll need the NuGet package [System.Numerics.Vectors](https://www.nuget.org/packages/System.Numerics.Vectors/).
 
 In both environments you´ll need to compile 64 bit applications and add a `using Systems.Numerics` to your code.
+
+Note: under Visual Studio 2017 (up to version 15.7.4) there is a reported bug concerning the debug view of `Vector<T>` (hovering over a variable will only show half of its elements, the rest will display as zeros)
 
 ## Introduction to Vector<T\>
 
 The Vector and Vector<T\> classes open up the possibility to use SIMD (Single Instruction, Multiple Data) instruction set (SSE, AVX) when programming. See the [documentation](https://msdn.microsoft.com/en-us/library/dn858385) for a full list of functions.
 
-It basically allows you to perform one calculation on multiple numbers in parallel. This is achieved by creating _Vectors_ of some numeric type and using operators  on them. One advantage of using .NET (over C / C++) for example is that the Vector<T\> abstracts the underlying hardware so your code will take advantage of whatever processor is there.
+It basically allows you to perform one calculation on multiple numbers in parallel. This is achieved by creating _Vectors_ of some numeric type and using operators  on them. One advantage of using .NET (over C / C++) for example is that the Vector<T\> abstracts the underlying hardware so your code will take advantage of whatever processor (and therefore vector width and instructions) is there.
 
-The number of elements you can place in a Vector will depend on the hardware: AVX2 offers a 256 bit wide number for example, meaning that a Vector<double> can contain 4 double values or 32 byte values.
+The number of elements you can place in a Vector will depend on the hardware: AVX2 offers a 256 bit wide number for example, meaning that a `Vector<double>` can contain 4 double values.
 
-Notice though that vectorizing a calculation **does not mean** automatic performance gains. Benchmarking is required to make sure that using vectors makes sense. A typical example is working with Vector<long\>: since the underlying hardware does not support multiplying (or dividing) integers element per element, vectorizing will possibly _reduce_ performance due to vector overhead (Intel provides a [full list](https://software.intel.com/sites/landingpage/IntrinsicsGuide/) of available SIMD instructions).
+Notice though that vectorizing a calculation **does not mean** automatic performance gains. Benchmarking is required to make sure that using vectors makes sense. A typical example is working with `Vector<long>`: since the underlying hardware does not support multiplying (or dividing) integers element per element, vectorizing will possibly _reduce_ performance due to vector overhead (Intel provides a [full list](https://software.intel.com/sites/landingpage/IntrinsicsGuide/) of available SIMD instructions).
 
 Vector<T\> can contain any numeric type (`sbyte, byte, short, ushort, int, uint, long, ulong, float, double`).
 
@@ -43,13 +47,12 @@ using System;
 using System.Numerics;
 
 [...]
-
-Vector<double> douZero = new Vector<double>.Zero;
-Vector<float> flOne = new Vector<float>.One;
+//Results in a AVX / AVX 2 system
+Vector<double> douZero = Vector<double>.Zero;// douZero.ToString() shows: <0, 0, 0, 0>
+Vector<float> flOne = Vector<float>.One; // <1, 1, 1, 1, 1, 1, 1, 1>
 Vector<ushort> shAny = new Vector<ushort>(43);
-Console.WriteLine(douZero); //Displays <0, 0, 0, 0>
 ```
-The above instructions in a AVX capable system will create vectors containing 4 repeated doubles, 8 repeated floats and 16 repeated ushorts.
+The above instructions in a AVX / AVX2 capable system will create vectors containing 4 repeated doubles, 8 repeated floats and 16 repeated ushorts.
 
 ##### Different values
 ```
@@ -58,6 +61,7 @@ The above instructions in a AVX capable system will create vectors containing 4 
 double[] doubArray = new double[] { 1, 2, 3, 4, 4, 3, 2, 1, -1, -2, -3, -4, -5 };
 Span<double> douSpan= new Span<double>(doubArray, 8, 4);
 
+//Results in a AVX / AVX 2 system
 Vector<double> douV = new Vector<double>(doubArray); //Will contain <1, 2, 3, 4>
 Vector<double> spanduoV = new Vector<double>(douSpan); //Will contain <-1, -2, -3, -4>
 Vector<double> dou2V = new Vector<double>(doubArray, 5); //Will contain <3, 2, 1, -1>
@@ -77,7 +81,7 @@ if(Vector.IsHardwareAccelerated == false)
   return;
 }
 
-int bitWidth = Vector<byte>.Count * 8; // bitWidth will contain the available vector size
+int bitWidth = Vector<byte>.Count * 8; // bitWidth will contain the available vector size in bits
 
 int floatSlots = Vector<float>.Count;// floatSlots will contain the number of floats per vector;
 
@@ -96,12 +100,13 @@ for(; i < myData.Length; i++)
 
 The `Count` property of a specific Vector<T> type tells you how many numbers of type T can be handled simultaneously by a vector and allows you to process your data in sizeable chunks.
 
-The examples below assume a 256 bit vector for simplicity.
+The examples below assume a 256 bit vector for simplicity and brevity.
 
 ## Retrieving values from Vectors
 
 ```
 [...]
+//Results in a AVX / AVX 2 system
 
 double[] doubArray = new double[] { 1, 2, 3, 4, 4, 3, 2, 1, -1, -2, -3, -4, -5 };
 
@@ -126,6 +131,7 @@ Notice that you cannot write `sumV[3] = 4.0` since the elements are read only. A
 
 ```
 [...]
+//Results in a AVX / AVX 2 system
 
 double[] doubArray = new double[] { 1, 2, 3, 4, 4, 3, 2, 1, -1, -2, -3, -4, -5 };
 float[] flArray = new float[] { 1, 2, 3, 4, 4, 3, 2, 1, -1, -2, -3, -4, -5 };
@@ -156,7 +162,7 @@ Although the documentation says that comparisons will return **one** if true, th
 
 ```
 [...]
-
+//Results in a AVX / AVX 2 system
 
 double[] doubArray = new double[] { 1, 2, 3, 4, 4, 3, 2, 1, -1, -2, -3, -4, -5 };
 Vector<double> allPositives = new Vector<double>(doubArray); //<1, 2, 3, 4>
@@ -172,6 +178,7 @@ These comparisons allow a quick verification over the whole vector either applyi
 
 ```
 [...]
+//Results in a AVX / AVX 2 system
 
 double[] doubArray = new double[] { 1, 2, 3, 4, 4, 3, 2, 1, -1, -2, -3, -4, -5 };
 
@@ -187,11 +194,12 @@ if(left != right)
     //at least one element pair is different
 }
 ```
-The "==" operator is equivalent to Vector.EqualsAll(), "!=" is its logical negation, as expected.
+The "==" operator is equivalent to `Vector.EqualsAll()`, "!=" is its logical negation, as expected.
 
 ## Conditional selection
 ```
 [...]
+//Results in a AVX / AVX 2 system
 
 double[] doubArray = new double[] { 1, 2, 3, 4, 4, 3, 2, 1, -1, -2, -3, -4, -5 };
 Vector<double> left = new Vector<double>(doubArray); //<1, 2, 3, 4>
@@ -203,11 +211,11 @@ Vector<double> select2 = Vector.ConditionalSelect(lessThan, left, Vector<double>
 ```
 Conditional selection permits you to combine two vectors based on conditions. In the code above, the line  
 `Vector<double> select = Vector.ConditionalSelect(lessThan, left, right);`  
-results in a vector with elements from `left` if they were less than the corresponding elements in `right`, otherwise from `right`.
+results in a vector with elements from `left` if they were less than the corresponding elements in `right`. For elements for which the comparison returned `false` (value zero), the result will be populated with elements from `right`.
 
 Notice that the line  
 `Vector<double> select2 = Vector.ConditionalSelect(lessThan, left, Vector<double>.Zero)`  
-uses the result from the comparison to select elements from another vector: it will fill in zeros for elements that were _greater than or equal_ in the original comparison.
+uses the result from the comparison to select elements from _another vector_: it will fill in zeros for elements that were _greater than or equal_ in the original comparison.
 
 In other words, the result from comparisons can be used as a mask for vector composition.
 
@@ -221,6 +229,7 @@ Conversions _transform_ the values of a vector of type T into a new vector of ty
 
 ```
 [...]
+//Results in a AVX / AVX 2 system
 
 Vector<double> minOne = new Vector<double>(-1);//<-1, -1, -1, -1>
 Vector<long> convToLong = Vector.ConvertToInt64(minOne);//<-1, -1, -1, -1>
@@ -233,10 +242,11 @@ You can convert vectors according to the following list. Notice that the bit siz
 
 ##### Reinterpretations
 
-Reinterpretations will treat the memory contents of a Vector<T\> as if it were a Vector<U\>.
+Reinterpretations will treat the memory contents of a` Vector<T>` as if it were a Vector<U\>.
 
 ```
 [...]
+//Results in a AVX / AVX 2 system
 
 Vector<int> convInt = Vector.ConvertToInt32(Vector<float>.One);// convInt = <1, 1, 1, 1, 1, 1, 1, 1>
 Vector<int> asInt = Vector.AsVectorInt32(Vector<float>.One);
@@ -251,6 +261,7 @@ The `Vector.AsVectorByte()` function simply lists all bytes in a given vector. N
 ##### Widen / narrow
  ```
  [...]
+//Results in a AVX / AVX 2 system
 
  short[] shArray = new short[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 Vector<short> sh = new Vector<short>(shArray);
@@ -260,7 +271,7 @@ Vector<int> high = new Vector<int>();
 
 Vector.Widen(sh, out low, out high);//low = <0, 1, 2, 3, 4, 5, 6, 7>             
  ```
-The `Vector.Widen()` operation will create _two_ vectors out of one: in the example above, the lower part of the Vector<short> is copied into Vector<int> low, the rest into vector high.
+The `Vector.Widen()` operation will create _two_ vectors out of one: in the example above, the lower half of vector `sh`  is copied into `Vector<int> low`, the rest into vector `high`.
 
 Conversely, `Vector.Narrow()` will create _one_ vector out of two.
 
@@ -272,13 +283,14 @@ The widen / narrow refers to the bit width of the elements (i. e. in the first e
 [...]
 
 Vector<byte> byteF0 = new Vector<byte>(0b11110000);
-Vector<byte> onesComp = Vector.OnesComplement(allFF);//onesComp = <15, 15, ...> = <0b00001111, ...>
+Vector<byte> onesComp = Vector.OnesComplement(byteF0);//onesComp = <15, 15, ...> = <0b00001111, ...>
 ```
 There are several bitwise operators available as Part of the VectorClass: OnesComplement, BitwiseAnd etc. Sadly no shifting operators have been included.
 
 ## Math operations
 ```
 [...]
+//Results in a AVX / AVX 2 system
 
 double[] douArray = new double[] { 1, 3, 5, 7, 2, 4, 6, 8, 9, 11, 13, 15, 10, 12, 14, 16 };
 
