@@ -2,19 +2,19 @@
 
  A few (NET CORE 2.1) benchmarks for the _System.Numerics.Vectors_ **Vector<T\>** and  **Vector** classes.
 
- //TODO add names of projects
+The ` SIMDBenchmarks` project runs some simple benchmarking on integer and floating point vectors and a [Mandelbrot](https://en.wikipedia.org/wiki/Mandelbrot_set) computation with floats and `Vector<float>`. It can easily be adapted for your own measuring.
 
 ## What you need
 
 If you develop for NET Core nothing extra is needed (the project included here is written against Net Core 2.1).
 
-To run the benchmarks you need to add [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet) (either by building the source or by adding a [NuGet package](https://www.nuget.org/packages/BenchmarkDotNet/) to your project).
+**To run the benchmarks** you need to add [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet) (either by building the source or by adding a [NuGet package](https://www.nuget.org/packages/BenchmarkDotNet/) to your project).
 
 In case you want to run on the .NET framework you´ll need the NuGet package [System.Numerics.Vectors](https://www.nuget.org/packages/System.Numerics.Vectors/).
 
 In both environments you´ll need to compile 64 bit applications and add a `using Systems.Numerics` to your code.
 
-Note: under Visual Studio 2017 (up to version 15.7.4) there is a reported bug concerning the debug view of `Vector<T>` (hovering over a variable will only show half of its elements, the rest will display as zeros)
+> Note: under Visual Studio 2017 (up to version 15.7.4) there is a reported bug concerning the debug view of `Vector<T>` (hovering over a variable will only show the first half of its elements, the rest will display as zeroes)
 
 ## Introduction to Vector<T\>
 
@@ -23,6 +23,8 @@ The Vector and Vector<T\> classes open up the possibility to use SIMD (Single In
 It basically allows you to perform one calculation on multiple numbers in parallel. This is achieved by creating _Vectors_ of some numeric type and using operators  on them. One advantage of using .NET (over C / C++) for example is that the Vector<T\> abstracts the underlying hardware so your code will take advantage of whatever processor (and therefore vector width and instructions) is there.
 
 The number of elements you can place in a Vector will depend on the hardware: AVX2 offers a 256 bit wide number for example, meaning that a `Vector<double>` can contain 4 double values.
+
+As far as I understand the source for [RyuJit](https://github.com/dotnet/coreclr/blob/master/src/jit/hwintrinsiclistxarch.h) there is no support for AVX-512 and AVX / AVX2 are identified as [partially supported](https://github.com/dotnet/coreclr/blob/master/src/jit/hwintrinsicxarch.cpp).
 
 Notice though that vectorizing a calculation **does not mean** automatic performance gains. Benchmarking is required to make sure that using vectors makes sense. A typical example is working with `Vector<long>`: since the underlying hardware does not support multiplying (or dividing) integers element per element, vectorizing will possibly _reduce_ performance due to vector overhead (Intel provides a [full list](https://software.intel.com/sites/landingpage/IntrinsicsGuide/) of available SIMD instructions).
 
