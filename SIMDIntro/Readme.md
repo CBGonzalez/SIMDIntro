@@ -12,7 +12,7 @@ This is work in progress, the plan is to put all the examples from *opengl-tutor
 
 ### What you need
 
-- Of course, OpenTK. You can get it as a [NuGet package](https://www.nuget.org/packages/OpenTK/) or build from [source](https://github.com/opentk/opentk).
+- Of course, OpenTK. You can get it as a [NuGet package](https://www.nuget.org/packages/OpenTK/) or build from [source](https://github.com/opentk/opentk). I use version 3.0.1 here.
 - A building environment (I use Visual Studio Express 2017 on Windows and build with mono on Linux).
 - A graphics card with drivers supporting OpenGL 3.3 or better. Almost everything newer than 3 or 4 years old should do. Sometimes a graphics driver update might be necessary. (If you aren´t sure about your card, check its capabilities with [OpenGL Extensions Viewer](http://realtech-vr.com/admin/glview) on Windows or using `gfxinfo` on Linux.)
 - Some experience with C#. The examples are not meant to introduce you to a new language...
@@ -27,9 +27,9 @@ I kept the same basic organization they use (i. e. the tutorials have the same n
 
 ### Structure
 
-Every tutorial is a standalone project in order to make it easier to understand and build each example.
+Every tutorial is a standalone project in order to make it easier to understand and build each example. All tutorials are part of an overarching solution.
 
-It contains all files necessary to buld (textures, shaders etc.).
+Each projects contains all files necessary to build (textures, shaders etc.).
 
 ### Index
 
